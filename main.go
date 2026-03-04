@@ -9,6 +9,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/abdul-local/mockdata/data"
 )
 
 func main() {
@@ -52,7 +54,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(mapping)
+	if err := validateType(mapping); err != nil {
+		fmt.Printf("invalid type: %s\n", err.Error())
+		os.Exit(1)
+
+	}
+	// membuat data palsu
+	result, err := generateOutput(mapping)
+	if err != nil {
+		fmt.Printf("failed generating output: %s\n", err.Error())
+		os.Exit(0)
+	}
+
+	// menulis hasil ke file
+	if err := writeOutput(outputPath, result); err != nil {
+		fmt.Printf("failed writing output: %s\n", err.Error())
+		os.Exit(0)
+	}
 
 	fmt.Println("success run ")
 
@@ -120,5 +138,50 @@ func readInput(path string, mapping *map[string]string) error {
 	if err = json.Unmarshal(fileByte, &mapping); err != nil {
 		return err
 	}
+	return nil
+}
+
+func validateType(mapping map[string]string) error {
+	for _, value := range mapping {
+		if !data.Supported[value] {
+			return fmt.Errorf("%s type is not supported", value)
+		}
+
+	}
+	return nil
+}
+
+func generateOutput(mapping map[string]string) (map[string]any, error) {
+	result := make(map[string]any)
+
+	for key, value := range mapping {
+		result[key] = data.Generate(value)
+	}
+	return result, nil
+}
+
+func writeOutput(path string, result map[string]any) error {
+	if path == "" {
+		return errors.New("path is empty")
+	}
+	flags := os.O_RDWR | os.O_CREATE | os.O_TRUNC // 25121024
+	file, err := os.OpenFile(path, flags, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// marshal result dengan indentasi
+	resultBytes, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// tulis ke file
+	_, err = file.Write(resultBytes)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
