@@ -21,7 +21,7 @@ jobs:
     - name: Lint
       uses: golangci/golangci-lint-action@v6
       with:
-      v ersion: v1.58
+        version: v1.58
     
     - name: Vulnerability check
       uses: golang/govulncheck-action@v1
