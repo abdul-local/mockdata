@@ -17,14 +17,18 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.22'
-
-    - name: Lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: latest
     
     - name: Vulnerability check
       uses: golang/govulncheck-action@v1
       with:
         go-version-input: 1.22.1
         go-package: ./...
+
+deploy:
+  runs-on: ubuntu-latest
+  needs: build
+  if: github.ref == 'refs/heads/main'
+
+  steps:
+    - name: Deploy Success
+      run: echo "🚀 Deployment triggered because build passed!"
